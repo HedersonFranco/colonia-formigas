@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testes de validação · Colônia de Formigas</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    td.ok { color: var(--up); font-weight: 600; }
+    td.fail { color: var(--down); font-weight: 600; }
+    table.data td { white-space: normal; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Testes de validação (seção 6)</h1>
+      <p>Executados agora, neste navegador, com o mesmo código da aplicação (js/aco.js).</p>
+    </div>
+    <nav class="toplinks">
+      <a href="index.html">Voltar ao simulador</a>
+      <a href="https://github.com/HedersonFranco/colonia-formigas" target="_blank" rel="noopener">Código-fonte no GitHub</a>
+    </nav>
+  </header>
+  <main class="wrap">
+    <div class="panel"><p id="summary"></p>
+      <div class="tscroll"><table class="data"><thead><tr><th>Seção</th><th>Verificação</th><th>Situação</th><th>Saída obtida</th></tr></thead><tbody id="body"></tbody></table></div>
+    </div>
+    <div class="panel"><h2>Comparação β = 0 × β = 2 (sementes 1 a 5)</h2><div id="beta"></div></div>
+    <div class="panel"><h2>Histórico da execução 6.4 (semente 42)</h2><div id="run42" class="tscroll tall"></div></div>
+  </main>
+  <script src="js/rng.js"></script>
+  <script src="js/aco.js"></script>
+  <script src="tests/tests.js"></script>
+  <script>
+    (function () {
+      const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      const br = (x) => String(Number(Number(x).toFixed(6))).replace('.', ',');
+      const out = ACOTests.runAll(ACO);
+      document.getElementById('summary').innerHTML = `<strong>${out.passed} de ${out.total}</strong> verificações aprovadas (tolerância absoluta 0,000001).`;
+      document.getElementById('body').innerHTML = out.results.map((r) =>
+        `<tr><td>${r.section}</td><td>${esc(r.name)}</td><td class="${r.pass ? 'ok' : 'fail'}">${r.pass ? 'Aprovado' : 'Falhou'}</td><td>${esc(r.details)}</td></tr>`).join('');
+      const b = out.experiments.beta;
+      let h = '<table class="data"><thead><tr><th>Semente</th><th>Melhor (β = 0)</th><th>Melhor (β = 2)</th></tr></thead><tbody>';
+      for (let k = 0; k < 5; k++) h += `<tr><td>${b[0].runs[k].seed}</td><td>${br(b[0].runs[k].best)}</td><td>${br(b[2].runs[k].best)}</td></tr>`;
+      h += `<tr><td><b>Média</b></td><td><b>${br(b[0].mean)}</b></td><td><b>${br(b[2].mean)}</b></td></tr>`;
+      h += `<tr><td><b>Atingiram 14</b></td><td>${b[0].hits}/5</td><td>${b[2].hits}/5</td></tr>`;
+      h += `<tr><td>Média das formigas na iteração 30</td><td>${br(b[0].meanFinalAvg)}</td><td>${br(b[2].meanFinalAvg)}</td></tr></tbody></table>`;
+      document.getElementById('beta').innerHTML = h;
+      const e = out.experiments.run42;
+      let t = `<p>Melhor rota: <b>${esc(e.bestRoute)}</b>, comprimento <b>${br(e.bestLength)}</b> (iteração ${e.bestIteration}).</p><table class="data"><thead><tr><th>Iteração</th><th>Menor</th><th>Média</th><th>Melhor acumulada</th><th>Rota</th></tr></thead><tbody><tr><td>0</td><td>—</td><td>—</td><td>ainda não calculada</td><td>—</td></tr>`;
+      e.history.forEach((r) => { t += `<tr><td>${r.it}</td><td>${br(r.min)}</td><td>${br(r.avg)}</td><td>${br(r.best)}</td><td>${esc(r.route)}</td></tr>`; });
+      document.getElementById('run42').innerHTML = t + '</tbody></table>';
+    })();
+  </script>
+</body>
+</html>

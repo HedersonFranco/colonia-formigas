@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colônia de Formigas · Rota de entregas (Ant System)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Rota de entregas por colônia de formigas</h1>
+      <p>Ant System · UFPI · Inteligência Artificial 2026.2</p>
+    </div>
+    <nav class="toplinks">
+      <a id="repo-link" href="https://github.com/HedersonFranco/colonia-formigas" target="_blank" rel="noopener">Código-fonte no GitHub</a>
+      <a href="tests.html">Testes de validação</a>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <aside class="panel config" aria-labelledby="cfg-title">
+      <h2 id="cfg-title">Configuração</h2>
+      <fieldset id="config-fieldset">
+        <legend class="sr-only">Dados e parâmetros</legend>
+        <div class="block-head">
+          <h3>Vértices</h3>
+          <span id="vcount" class="muted"></span>
+        </div>
+        <p class="hint">Coordenadas de 0 a 1.000, até duas casas decimais. Entre 4 e 12 vértices.</p>
+        <div class="tscroll">
+          <table class="vtable" id="vertex-table">
+            <thead><tr><th>ID</th><th>x</th><th>y</th><th><span class="sr-only">Remover</span></th></tr></thead>
+            <tbody id="vertex-body"></tbody>
+          </table>
+        </div>
+        <div class="row-btns">
+          <button type="button" id="btn-add">Adicionar vértice</button>
+          <button type="button" id="btn-scenario" class="ghost">Cenário inicial</button>
+          <button type="button" id="btn-ref" class="ghost">Instância de teste (6.1)</button>
+        </div>
+
+        <label class="field wide" for="depot">Depósito
+          <select id="depot"></select>
+        </label>
+
+        <h3>Parâmetros</h3>
+        <div class="grid2">
+          <label class="field" for="p-ants">Número de formigas <small>inteiro, 1 a 100</small>
+            <input id="p-ants" data-key="ants" inputmode="numeric" autocomplete="off"></label>
+          <label class="field" for="p-iterations">Número de iterações <small>inteiro, 1 a 200</small>
+            <input id="p-iterations" data-key="iterations" inputmode="numeric" autocomplete="off"></label>
+          <label class="field" for="p-alpha">Influência do feromônio (α) <small>0 a 5; 0 = sem influência</small>
+            <input id="p-alpha" data-key="alpha" inputmode="decimal" autocomplete="off"></label>
+          <label class="field" for="p-beta">Influência da distância (β) <small>0 a 5; 0 = sem influência</small>
+            <input id="p-beta" data-key="beta" inputmode="decimal" autocomplete="off"></label>
+          <label class="field" for="p-rhoPercent">Taxa de evaporação (ρ, %) <small>0% a 90%; 50% = 0,5</small>
+            <input id="p-rhoPercent" data-key="rhoPercent" inputmode="decimal" autocomplete="off"></label>
+          <label class="field" for="p-tau0">Feromônio inicial (τ₀) <small>0,01 a 100</small>
+            <input id="p-tau0" data-key="tau0" inputmode="decimal" autocomplete="off"></label>
+          <label class="field" for="p-Q">Constante de depósito (Q) <small>0,01 a 10.000; depósito Q/L</small>
+            <input id="p-Q" data-key="Q" inputmode="decimal" autocomplete="off"></label>
+          <label class="field" for="p-seed">Semente aleatória <small>inteiro, 0 a 4.294.967.295</small>
+            <input id="p-seed" data-key="seed" inputmode="numeric" autocomplete="off"></label>
+        </div>
+      </fieldset>
+
+      <div id="dirty" class="notice" hidden>Dados ou parâmetros alterados. Clique em <strong>Reiniciar</strong> para aplicar.</div>
+      <div id="errors" class="errors" role="alert" hidden></div>
+    </aside>
+
+    <section class="main-col">
+      <div class="panel controls">
+        <div class="btns">
+          <button type="button" id="btn-run" class="primary">Executar</button>
+          <button type="button" id="btn-pause">Pausar</button>
+          <button type="button" id="btn-step">Avançar uma iteração</button>
+          <button type="button" id="btn-reset">Reiniciar</button>
+        </div>
+        <label class="speed" for="speed">Intervalo entre iterações
+          <input type="range" id="speed" min="0" max="1500" step="50" value="400">
+          <output id="speed-out">400 ms</output>
+        </label>
+        <p id="status" class="status" aria-live="polite"></p>
+      </div>
+
+      <div class="metrics" id="metrics" aria-live="polite"></div>
+
+      <div class="panel graph-panel">
+        <div class="block-head">
+          <h2>Grafo e feromônio</h2>
+          <label class="check"><input type="checkbox" id="show-labels"> Mostrar τ nas arestas</label>
+        </div>
+        <p id="graph-mode" class="notice small" hidden></p>
+        <div class="graph-wrap" id="graph-wrap">
+          <svg id="graph" viewBox="0 0 640 500" role="img" aria-label="Grafo das entregas com o feromônio de cada aresta"></svg>
+          <div id="tooltip" class="tooltip" hidden></div>
+        </div>
+        <div class="legend">
+          <span class="lg"><svg width="44" height="14"><line x1="2" y1="7" x2="42" y2="7" class="lg-thin"/></svg>pouco feromônio</span>
+          <span class="lg"><svg width="44" height="14"><line x1="2" y1="7" x2="42" y2="7" class="lg-thick"/></svg>muito feromônio</span>
+          <span class="lg"><svg width="44" height="14"><line x1="2" y1="7" x2="42" y2="7" class="lg-best"/></svg>melhor rota acumulada</span>
+          <span class="lg"><svg width="18" height="18"><rect x="2" y="2" width="14" height="14" rx="2" class="lg-depot"/></svg>depósito</span>
+          <span class="lg"><svg width="18" height="18"><circle cx="9" cy="9" r="7" class="lg-node"/></svg>ponto de entrega</span>
+        </div>
+        <p id="scale-info" class="scale-info"></p>
+        <p class="hint">Passe o cursor sobre uma aresta para ver distância e feromônio; clique para fixar no painel abaixo.</p>
+
+        <div class="edge-panel">
+          <label class="field" for="edge-select">Consultar aresta
+            <select id="edge-select"></select>
+          </label>
+          <div id="edge-info" class="edge-info"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Evolução</h2>
+        <div class="chart-legend">
+          <span><i class="sw s-min"></i>menor distância da iteração</span>
+          <span><i class="sw s-avg"></i>média das formigas</span>
+          <span><i class="sw s-best"></i>melhor acumulada</span>
+        </div>
+        <svg id="chart" viewBox="0 0 640 240" role="img" aria-label="Gráfico das distâncias por iteração"></svg>
+        <details class="exp">
+          <summary>Histórico por iteração (tabela)</summary>
+          <div class="tscroll tall">
+            <table class="data">
+              <thead><tr><th>Iteração</th><th>Menor da iteração</th><th>Média</th><th>Melhor acumulada</th><th>Melhor rota da iteração</th></tr></thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel">
+        <div class="block-head">
+          <h2>Registros da execução</h2>
+        </div>
+        <div class="log-selectors">
+          <label class="field" for="log-iter">Iteração <select id="log-iter"></select></label>
+          <label class="field" for="log-ant">Formiga <select id="log-ant"></select></label>
+        </div>
+        <p class="hint">Todas as formigas da iteração aparecem na última iteração; nas anteriores fica guardada a construção da formiga 1.</p>
+        <details class="exp" open>
+          <summary>Construção da rota passo a passo</summary>
+          <div id="log-construct"></div>
+        </details>
+        <details class="exp">
+          <summary>Rotas e comprimentos de todas as formigas</summary>
+          <div id="log-routes"></div>
+        </details>
+        <details class="exp">
+          <summary>Atualização do feromônio por aresta</summary>
+          <div id="log-pher"></div>
+        </details>
+      </div>
+
+      <div class="panel about">
+        <h2>Distância, feromônio e peso de escolha</h2>
+        <p><strong>Distância d(i,j)</strong> é o custo fixo da aresta, calculado pelas coordenadas, e não muda durante a execução.
+          <strong>Feromônio τ(i,j)</strong> é a quantidade atualizada pelo algoritmo ao final de cada iteração:
+          τ<sub>novo</sub> = (1 − ρ)·τ<sub>antigo</sub> + Σ Q/L<sub>k</sub> nas arestas percorridas pela formiga k.
+          <strong>Peso w(i,j) = τ<sup>α</sup>·(1/d)<sup>β</sup></strong> combina os dois e só serve para o sorteio:
+          p(i,j) = w(i,j) / Σ w(i,u) entre os vértices ainda não visitados.</p>
+        <p>As formigas de uma iteração usam todas a mesma matriz de feromônio. A evaporação e o depósito só acontecem depois que todas terminam suas rotas. O intervalo entre iterações só controla o ritmo da tela e não interfere nos sorteios.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <a id="repo-link-foot" href="https://github.com/HedersonFranco/colonia-formigas" target="_blank" rel="noopener">Repositório público no GitHub</a>
+    <span>HTML, CSS e JavaScript, sem bibliotecas externas.</span>
+  </footer>
+
+  <script src="js/rng.js"></script>
+  <script src="js/aco.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
