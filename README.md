@@ -4,6 +4,7 @@ Universidade Federal do Piauí · Inteligência Artificial · Período 2026.2
 Atividade Prática sobre Colônia de Formigas
 
 **Aplicação publicada (GitHub Pages):** https://hedersonfranco.github.io/colonia-formigas/
+
 **Repositório:** https://github.com/HedersonFranco/colonia-formigas
 
 ## Autores
